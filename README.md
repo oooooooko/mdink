@@ -21,7 +21,47 @@ MDInk 是一款轻量的 Markdown 社媒排版工具，支持实时预览、主�
 
 还支持导出独立排版 HTML、Markdown，复制 HTML 源码，以及所有草稿的 JSON 备份和恢复（包含图片、正文与样式）。恢复备份会追加草稿，保留现有内容。
 
-内置「经典」「简约」「杂志」和「Nice」四种主题，可在右侧「排版设置 → 文章主题」中切换。「Nice」参考 Markdown Nice 的清爽阅读风格，以细线标题、留白和浅色引用块呈现内容，同样支持主题色、字体、字号与行距调整。
+内置「经典」「简约」「杂志」「Nice」「纸间」「夜航」「花信」七种主题，可在右侧「排版设置 → 文章主题」中切换。新增的「纸间」采用暖纸与书卷风格，「夜航」采用深色科技风格，「花信」采用柔和的配色与圆角层次；三款主题均独立设计与编写 CSS，没有复制 mdnice 的主题代码或素材。
+
+### 自定义文章样式
+
+点击主题列表下方的「编辑 CSS 样式」，即可查看当前主题的 CSS 源代码，直接修改并实时预览。也可以从任一内置主题重新开始。点击左侧的可修改项，会在源码末尾添加对应的覆盖规则，方便调整，不必重写整个主题。
+
+| 可修改内容 | 对应选择器 | 常用属性 |
+| --- | --- | --- |
+| 全文 | `.article` | 字体、字号、行高、背景、内边距 |
+| 段落 | `.article p` | 字色、字距、缩进、段间距、对齐 |
+| 标题 | `.article h1`、`.article h2`、`.article h3` | 字号、字重、装饰线、背景、圆角 |
+| 引用 | `.article blockquote` | 背景、边框、留白、文字颜色 |
+| 强调与链接 | `.article strong`、`.article a` | 颜色、字重、下划线 |
+| 列表 | `.article ul`、`.article ol`、`.article li` | 项目符号、缩进、项目间距 |
+| 行内代码 | `.article :not(pre) > code` | 颜色、背景、圆角、内边距 |
+| 代码块 | `.article pre`、`.article .codehead` | 代码字体、背景、边距、行距 |
+| 表格 | `.article table`、`.article th`、`.article td` | 边框、表头背景、单元格间距 |
+| 图片与图注 | `.article img`、`.article figcaption` | 最大宽度、圆角、图注字色与对齐 |
+| 分隔线 | `.article hr` | 粗细、线型、颜色、上下间距 |
+
+例如，在源码末尾添加：
+
+```css
+.article {
+  --md-primary-color: #8263b5;
+}
+.article p {
+  text-indent: 2em;
+  margin: 1.2em 0;
+}
+.article h2 {
+  color: var(--md-primary-color);
+  border-bottom: 2px solid var(--md-primary-color);
+}
+```
+
+- 「保存样式」会将 CSS 和当前文章一起保存在本机，并出现可随时切换的「自定义」主题；不会修改其他草稿或内置主题。切换到内置主题不会删除已保存的 CSS。
+- 支持 `Ctrl / ⌘ + F` 查找、`Ctrl / ⌘ + S` 保存，也可以点击「导出 CSS」保存 `.css` 源文件。草稿 JSON 备份与恢复包含自定义 CSS。
+- 可使用 `--md-primary-color`（主题色）、`--md-font-size`（字号）、`--article-leading`（行高）、`--article-font`（字体）变量；不自行覆盖变量时，仍可通过排版设置调整。
+- 样式仅作用于文章预览，选择器需以 `.article` 开头；不加载 CSS 外部资源，不支持 `@import`、外部字体、转义选择器和嵌套选择器。语法错误会提示并阻止保存，预览保留上一次有效结果。
+- 微信和头条号的复制、HTML 导出会包含内联样式；掘金 Markdown 不携带 CSS。伪元素、动画和复杂定位效果不能完整带到平台编辑器。
 
 ### 数据与兼容性
 

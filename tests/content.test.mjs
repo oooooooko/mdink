@@ -27,4 +27,8 @@ test('backup settings cannot inject CSS or unsupported platform configuration', 
   assert.deepEqual(cleanSettings({ platform:'__proto__', color:'red;position:fixed', fontSize:999, theme:'<script>' }), defaults)
   assert.equal(safeName('../../bad:name?'), '.._.._bad_name_')
   assert.equal(cleanSettings({ theme:'nice' }).theme, 'nice')
+  for (const theme of ['paper','night','bloom']) assert.equal(cleanSettings({theme}).theme, theme)
+  assert.equal(cleanSettings({theme:'custom',customCSS:'.article p { color: red; }'}).theme,'custom')
+  assert.equal(cleanSettings({theme:'custom',customCSS:''}).theme,'classic')
+  assert.equal(cleanSettings({customCSS:'x'.repeat(100001)}).customCSS,'')
 })

@@ -1,13 +1,17 @@
 import { EditorView, basicSetup } from 'codemirror'
 import { EditorState } from '@codemirror/state'
 import { markdown } from '@codemirror/lang-markdown'
+import { css } from '@codemirror/lang-css'
 import { undo, redo } from '@codemirror/commands'
 import { createElement, PenLine, FileText, Plus, FolderOpen, PanelLeft, PanelRight, ChevronDown, Copy, Download, Check, ShieldCheck, Upload, Trash2, MoreHorizontal, Smartphone, Monitor, Bold, Italic, Heading2, Link, Image, List, Code, Quote, X, FileCode2, ArrowDownUp, Settings2, Search, CheckCheck } from 'lucide'
 import { defaults, platforms, articleTitle, safeName, cleanSettings, imageKey, outputMarkdown } from './content.js'
-import { initPreview, renderArticle, inlineHTML } from './renderer.js'
+import { initPreview, renderArticle, inlineHTML, editableThemeCSS } from './renderer.js'
+import { themes, styleTargets } from './themes.js'
+import { compileCustomCSS } from './custom-css.js'
 import { loadWorkspace, saveWorkspace } from './storage.js'
 import { sample } from './sample.js'
 import './style.css'
+import './theme-editor.css'
 
 const icons = { PenLine, FileText, Plus, FolderOpen, PanelLeft, PanelRight, ChevronDown, Copy, Download, Check, ShieldCheck, Upload, Trash2, MoreHorizontal, Smartphone, Monitor, Bold, Italic, Heading2, Link, Image, List, Code, Quote, X, FileCode2, ArrowDownUp, Settings2, Search, CheckCheck }
 const icon = (name, size = 16) => createElement(icons[name], { width: size, height: size, 'stroke-width': 1.7, 'aria-hidden': 'true' }).outerHTML
@@ -71,7 +75,7 @@ $('#app').innerHTML = `
     <aside class="settings-panel" aria-label="排版设置">
       <div class="panel-heading"><span>${icon('Settings2')} 排版设置</span><button class="icon-btn" data-action="settings" aria-label="收起排版设置" title="收起排版设置">${icon('X', 15)}</button></div>
       <div class="settings-scroll">
-        <div class="setting-section"><div class="section-label">文章主题 <span>THEME</span></div><div class="theme-list">${[['classic','经典','doocs 经典排版'],['minimal','简约','留白与阅读感'],['editorial','杂志','层次分明的表达'],['nice','Nice','mdnice 灵感 · 清爽排版']].map(([key,label,desc]) => `<button class="theme-card" data-theme="${key}" aria-pressed="false"><div class="theme-mini ${key}"><b></b><i></i><i></i><i></i></div><span><strong>${label}</strong><small>${desc}</small></span><span class="theme-check">${icon('Check', 13)}</span></button>`).join('')}</div></div>
+        <div class="setting-section"><div class="section-label">文章主题 <span>THEME</span></div><div class="theme-list">${[...themes,{id:'custom',name:'自定义',description:'当前文章'}].map(({id,name,description}) => `<button class="theme-card" data-theme="${id}" ${id==='custom'?'id="custom-theme-card" hidden':''} aria-pressed="false"><div class="theme-mini ${id}"><b></b><i></i><i></i><i></i></div><span><strong>${name}</strong><small>${description}</small></span><span class="theme-check">${icon('Check', 13)}</span></button>`).join('')}</div><button class="edit-style-button" data-action="edit-style">${icon('Code',15)} 编辑 CSS 样式</button></div>
         <div class="setting-section"><div class="section-label">主题色 <span id="color-label">#07A35A</span></div><div class="color-options">${['#07a35a','#1e80ff','#7c5cdb','#d89938','#ed4545','#343d46'].map(color => `<button class="color-swatch" data-color="${color}" style="--swatch:${color}" title="${color}" aria-label="主题色 ${color}" aria-pressed="false"></button>`).join('')}<label class="custom-color" title="自定义主题色">${icon('Plus', 13)}<input type="color" id="custom-color" aria-label="自定义主题色"></label></div></div>
         <div class="setting-section typography"><div class="section-label">文字排版 <span>TYPOGRAPHY</span></div><label class="setting-row">字体<select id="font" data-setting="font"><option value="sans">无衬线 · 系统默认</option><option value="serif">衬线 · 宋体</option></select></label><label class="setting-row">字号<select id="fontSize" data-setting="fontSize">${[14,15,16,17,18,20].map(n=>`<option value="${n}">${n} px</option>`).join('')}</select></label><label class="setting-row">行距<select id="lineHeight" data-setting="lineHeight">${[1.5,1.6,1.7,1.8,2,2.2].map(n=>`<option value="${n}">${n.toFixed(1)} 倍</option>`).join('')}</select></label></div>
         <div class="setting-section"><div class="section-label">内容选项 <span>CONTENT</span></div><label class="toggle-row"><span>正文包含文章标题</span><input type="checkbox" role="switch" id="includeTitle" data-setting="includeTitle"></label><label class="toggle-row" id="footnotes-row"><span>站外链接转文末脚注</span><input type="checkbox" role="switch" id="footnotes" data-setting="footnotes"></label><label class="toggle-row"><span>允许联网加载远程图片</span><input type="checkbox" role="switch" id="remote" data-setting="remote"></label><p class="setting-tip">本地图片会内嵌到文章中。平台若不接收图片，请在发布时重新上传。</p></div>
@@ -85,6 +89,16 @@ $('#app').innerHTML = `
   <input type="file" id="restore-input" accept=".json,application/json" hidden>
   <div class="toast" id="toast" role="status" hidden></div>
   <div class="drop-overlay" id="drop-overlay" hidden><div>${icon('Upload', 42)}<strong>放下文件，开始创作</strong><p>支持 Markdown 和本地图片</p></div></div>
+  <dialog id="style-dialog" class="style-dialog">
+    <div class="style-dialog-heading"><div><h2>自定义文章样式</h2><p>编辑 CSS，实时预览，保存到当前文章。</p></div><button class="icon-btn" data-action="close-style" aria-label="关闭样式编辑器">${icon('X',20)}</button></div>
+    <div class="style-dialog-toolbar"><label>从主题开始 <select id="style-base">${themes.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}<option value="custom" id="style-custom-option">已保存的自定义样式</option></select></label><span>主题色、字号和行距沿用文章设置</span></div>
+    <div class="style-dialog-content">
+      <aside class="style-guide"><h3>可以修改什么</h3><p>点击一项，在 CSS 末尾添加覆盖规则。</p>${styleTargets.map(([name,selector,properties],index)=>`<button class="style-target" data-style-target="${index}"><strong>${name}</strong><code>${escapeHTML(selector)}</code><span>${properties}</span></button>`).join('')}<details><summary>可用的 CSS 变量</summary><p><code>--md-primary-color</code> 主题色<br><code>--md-font-size</code> 正文字号<br><code>--article-leading</code> 行高<br><code>--article-font</code> 字体</p></details><p>选择器以 <code>.article</code> 开头。外部资源不载入；伪元素、动画等效果不能随富文本复制。</p></aside>
+      <section class="css-source"><div class="css-pane-heading"><strong>CSS 源代码</strong><span>⌘ / Ctrl + F 查找</span></div><div id="css-editor"></div></section>
+      <section class="css-preview"><div class="css-pane-heading"><strong>文章预览</strong><span>实时更新</span></div><div class="css-preview-scroll"><div id="style-preview-host"></div></div></section>
+    </div>
+    <div class="style-dialog-footer"><span id="style-error" role="status"></span><div><button class="button" data-action="export-css">${icon('Download',14)} 导出 CSS</button><button class="button" data-action="close-style">取消</button><button class="button primary" data-action="save-style" id="save-style">保存样式</button></div></div>
+  </dialog>
   <dialog id="help-dialog"><div class="dialog-heading"><span class="brand-icon">${icon('PenLine',20)}</span><h2>让内容，好好呈现。</h2><button class="icon-btn" data-action="close-help" aria-label="关闭帮助">${icon('X', 20)}</button></div><p>MDInk 是一款在本机运行的 Markdown 社媒排版工具。</p><ol class="help-steps"><li><b>写作或导入</b><span>拖入 .md 文件；含相对路径图片时，请用「文件 → 导入文章文件夹」。文件夹中的多篇文章会分别成为草稿。</span></li><li><b>选择发布平台</b><span>公众号、头条号复制富文本；掘金复制 Markdown。文章标题通常在平台单独填写，可关闭「正文包含文章标题」。</span></li><li><b>调整并复制</b><span>切换主题、字号与行距，点击右上角复制。复制失败时，可以导出 HTML 后打开并复制正文。</span></li></ol><div class="help-note"><b>离线与数据</b><p>构建后的 dist/index.html 包含全部脚本和样式，可双击打开。草稿存于当前浏览器的 IndexedDB；清理浏览器数据、更换网址或移动离线文件可能影响草稿，请定期「备份所有草稿」。浏览器禁止本地存储时，仍可编辑并导出。</p><b>平台兼容</b><p>各平台可能过滤部分 CSS、外链和 Base64 图片，请在发布前检查。掘金 Markdown 的最终外观由平台决定；公式、Mermaid 等以源文本或代码呈现，不做图片转换。仅支持标准 Markdown / GFM，不解析 Obsidian 双链及嵌入语法。</p></div><div class="help-credit">界面布局参考 <a href="https://github.com/doocs/md" target="_blank" rel="noopener noreferrer">doocs/md</a>，复用其经典主题（WTFPL）；Nice 主题参考 <a href="https://github.com/mdnice/markdown-nice" target="_blank" rel="noopener noreferrer">Markdown Nice</a> 的阅读排版理念；富文本工作流参考 <a href="https://github.com/spark-ai-boy/obsidian-social-formatter" target="_blank" rel="noopener noreferrer">Social Formatter</a>。这是独立的离线实现，非上述项目官方版本。</div></dialog>
 `
 
@@ -108,6 +122,73 @@ const editor = new EditorView({
   extensions: editorExtensions,
   parent: $('#editor'),
 })
+
+const styleArticle = initPreview($('#style-preview-host'))
+let styleDraftSettings, initialStyleSource = '', styleTimer
+const cssEditorExtensions = [basicSetup, css(), EditorView.lineWrapping, EditorView.contentAttributes.of({'aria-label':'自定义 CSS 源代码',spellcheck:'false'}), EditorView.updateListener.of(update => {
+  if (!update.docChanged) return
+  clearTimeout(styleTimer)
+  $('#save-style').disabled = true
+  styleTimer = setTimeout(previewStyle, 180)
+})]
+const cssEditor = new EditorView({doc:'',extensions:cssEditorExtensions,parent:$('#css-editor')})
+
+function loadStyleSource(id, preserveColor = false) {
+  styleDraftSettings = {...settings(), theme:id}
+  const template = themes.find(t => t.id === id)
+  if (template?.color && !preserveColor) styleDraftSettings.color = template.color
+  renderArticle(styleArticle, active().source, styleDraftSettings, active().images, active().basePath)
+  const source = id === 'custom' ? settings().customCSS : editableThemeCSS(styleArticle)
+  initialStyleSource = source
+  cssEditor.setState(EditorState.create({doc:source,extensions:cssEditorExtensions}))
+  $('#style-base').value = id
+  previewStyle()
+  cssEditor.requestMeasure()
+}
+
+function openStyleEditor() {
+  $('#style-custom-option').disabled = !settings().customCSS
+  $('#style-dialog').showModal()
+  loadStyleSource(settings().theme, true)
+}
+
+function closeStyleEditor() {
+  if (cssEditor.state.doc.toString() !== initialStyleSource && !confirm('关闭后将放弃尚未保存的 CSS 修改，确定关闭？')) return
+  clearTimeout(styleTimer)
+  $('#style-dialog').close()
+}
+
+function previewStyle() {
+  clearTimeout(styleTimer)
+  const source = cssEditor.state.doc.toString()
+  try {
+    if (!source.trim()) throw new Error('请先填写 CSS 样式。')
+    compileCustomCSS(source)
+    renderArticle(styleArticle, active().source, {...styleDraftSettings,theme:'custom',customCSS:source}, active().images, active().basePath)
+    $('#style-error').textContent = ''
+    $('#save-style').disabled = false
+    return true
+  } catch (error) {
+    $('#style-error').textContent = error.message
+    $('#save-style').disabled = true
+    return false
+  }
+}
+
+function saveStyle() {
+  if (!previewStyle()) return
+  Object.assign(settings(),{theme:'custom',customCSS:cssEditor.state.doc.toString(),color:styleDraftSettings.color})
+  initialStyleSource = settings().customCSS
+  $('#style-dialog').close()
+  render(); scheduleSave()
+  toast('自定义样式已保存到当前文章')
+}
+
+$('#style-base').addEventListener('change',event=>{
+  if(cssEditor.state.doc.toString()!==initialStyleSource&&!confirm('切换模板会放弃未保存的 CSS 修改，确定切换？')){event.target.value=styleDraftSettings.theme;return}
+  loadStyleSource(event.target.value)
+})
+$('#style-dialog').addEventListener('cancel',event=>{event.preventDefault();closeStyleEditor()})
 
 function toast(message, error = false) {
   clearTimeout(toastTimer)
@@ -147,6 +228,7 @@ function render() {
   const s = settings(), p = platforms[s.platform]
   const warnings = renderArticle(article, active().source, s, active().images, active().basePath)
   document.documentElement.style.setProperty('--article-accent', s.color)
+  $('#custom-theme-card').hidden = !s.customCSS
   document.querySelectorAll('[data-platform]').forEach(b=>{const selected=b.dataset.platform===s.platform;b.classList.toggle('selected',selected);b.setAttribute('aria-selected',selected)})
   document.querySelectorAll('[data-theme]').forEach(b=>{const selected=b.dataset.theme===s.theme;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',selected)})
   document.querySelectorAll('[data-color]').forEach(b=>{const selected=b.dataset.color===s.color;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',selected)})
@@ -278,6 +360,7 @@ async function restoreBackup(file) {
       if(typeof d.source!=='string'||d.source.length>3*1024*1024)throw new Error('备份正文格式无效或过大')
       const next=draft(d.source,typeof d.name==='string'?d.name.slice(0,120):'')
       next.settings=cleanSettings(d.settings)
+      if (next.settings.customCSS) compileCustomCSS(next.settings.customCSS)
       next.basePath=typeof d.basePath==='string'?d.basePath:''
       for(const [key,value] of Object.entries(d.images||{})) {
         if(typeof value!=='string'||!/^data:image\/(png|jpeg|gif|webp);base64,/i.test(value)||value.length>12*1024*1024)throw new Error('备份包含无效图片')
@@ -309,7 +392,8 @@ const actions={
   'export-html':()=>{const title=articleTitle(active().source);download(`<!doctype html>\n<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: https: http:; style-src 'unsafe-inline'; base-uri 'none'"><title>${escapeHTML(title)}</title></head><body style="margin:0 auto;max-width:780px;background:#fff">${htmlOutput()}</body></html>`,safeName(title)+'.html','text/html;charset=utf-8');toast('排版 HTML 已导出，可离线打开')},
   'export-md':()=>{download(markdownOutput(),safeName(articleTitle(active().source))+'.md','text/markdown;charset=utf-8');toast('Markdown 已导出，图片路径保持原样，发布时请上传图片')},
   backup:()=>{download(JSON.stringify({format:'mdink-backup-v1',drafts:state.drafts},null,2),`MDInk草稿备份-${new Date().toLocaleDateString('sv-SE')}.json`,'application/json');toast('草稿备份已导出，包含本地图片和排版设置')},
-  reset:()=>{const platform=settings().platform,p=platforms[platform];active().settings={...defaults,platform,color:p.color,fontSize:p.size};render();scheduleSave()},
+  reset:()=>{const platform=settings().platform,p=platforms[platform];active().settings={...defaults,customCSS:settings().customCSS,platform,color:p.color,fontSize:p.size};render();scheduleSave()},
+  'edit-style':openStyleEditor,'close-style':closeStyleEditor,'save-style':saveStyle,'export-css':()=>download(cssEditor.state.doc.toString(),safeName(articleTitle(active().source))+'-样式.css','text/css;charset=utf-8'),
   help:()=>$('#help-dialog').showModal(),'close-help':()=>$('#help-dialog').close(),
 }
 
@@ -319,7 +403,8 @@ document.addEventListener('click',event=>{
   if(button.dataset.action){actions[button.dataset.action]?.();document.querySelectorAll('details[open]').forEach(d=>d.open=false)}
   if(button.dataset.format)insertFormat(button.dataset.format)
   if(button.dataset.platform){const key=button.dataset.platform;Object.assign(settings(),{platform:key,color:platforms[key].color,fontSize:platforms[key].size});render();scheduleSave()}
-  if(button.dataset.theme){settings().theme=button.dataset.theme;render();scheduleSave()}
+  if(button.dataset.theme){const theme=themes.find(t=>t.id===button.dataset.theme);settings().theme=button.dataset.theme;if(theme?.color)settings().color=theme.color;render();scheduleSave()}
+  if(button.dataset.styleTarget!==undefined){const target=styleTargets[Number(button.dataset.styleTarget)];if(target){const text=`\n\n${target[1]} {\n  /* ${target[2]} */\n}\n`;const end=cssEditor.state.doc.length;cssEditor.dispatch({changes:{from:end,insert:text},selection:{anchor:end+text.indexOf('  /*')}});cssEditor.focus()}}
   if(button.dataset.color){settings().color=button.dataset.color;render();scheduleSave()}
   if(button.dataset.draft)switchDraft(button.dataset.draft)
   if(button.dataset.delete&&confirm('删除这篇本地草稿？删除后无法撤销，建议先导出备份。')){
@@ -334,6 +419,7 @@ document.addEventListener('pointerdown',event=>{
   if(!event.target.closest('.drafts-panel, [data-action="sidebar"]'))document.body.classList.remove('show-drafts')
 })
 document.addEventListener('keydown',event=>{
+  if($('#style-dialog').open){if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='s'){event.preventDefault();saveStyle()}return}
   if(event.key==='Escape'){document.querySelectorAll('details[open]').forEach(d=>d.open=false);document.body.classList.add('hide-settings');document.body.classList.remove('show-drafts')}
   if((event.metaKey||event.ctrlKey)&&['o','s'].includes(event.key.toLowerCase())){event.preventDefault();if(event.key.toLowerCase()==='o')actions.import();else persist()}
 })
@@ -361,7 +447,7 @@ function syncScroll(from,to) {
 }
 editor.scrollDOM.addEventListener('scroll',()=>syncScroll(editor.scrollDOM,$('#preview-scroll')))
 $('#preview-scroll').addEventListener('scroll',()=>syncScroll($('#preview-scroll'),editor.scrollDOM))
-window.addEventListener('beforeunload',event=>{if(!storageAvailable||saveTimer){event.preventDefault();event.returnValue='';persist()}})
+window.addEventListener('beforeunload',event=>{if(!storageAvailable||saveTimer||($('#style-dialog').open&&cssEditor.state.doc.toString()!==initialStyleSource)){event.preventDefault();event.returnValue='';persist()}})
 document.addEventListener('visibilitychange',()=>{if(document.hidden)persist()})
 
 render()

@@ -4,9 +4,11 @@ import hljs from 'highlight.js/lib/common'
 import highlightCSS from 'highlight.js/styles/github-dark.css?inline'
 import classicCSS from './vendor/doocs-default.css?raw'
 import { outputMarkdown, resolveImage } from './content.js'
+import { extraThemeCSS } from './themes.js'
+import { compileCustomCSS } from './custom-css.js'
 
 const baseCSS = `
-:host { display:block; color:#333; background:white; }
+:host { display:block; color:#333; background:white; contain:layout paint style; }
 * { box-sizing:border-box; }
 .article { --foreground:0 0% 20%; --md-block-spacing:.72; --md-link-color:var(--md-primary-color); --md-blockquote-background:#f6f8f7; --blockquote-background:#f6f8f7; font-family:var(--article-font); font-size:var(--md-font-size); line-height:var(--article-leading); padding:20px 24px 40px; overflow-wrap:anywhere; background:#fff; color:#333; }
 .article h1,.article h2,.article h3,.article h4 { line-height:1.5; }
@@ -59,22 +61,31 @@ const baseCSS = `
 export function initPreview(host) {
   const shadow = host.attachShadow({ mode: 'open' })
   const style = document.createElement('style')
-  style.textContent = classicCSS + '\n' + highlightCSS + '\n' + baseCSS
+  style.dataset.articleBase = ''
+  style.textContent = classicCSS + '\n' + highlightCSS + '\n' + baseCSS + '\n' + extraThemeCSS
+  const customStyle = document.createElement('style')
+  customStyle.dataset.articleCustom = ''
   const article = document.createElement('section')
-  shadow.append(style, article)
+  shadow.append(style, customStyle, article)
   return article
 }
 
 export function renderArticle(article, source, settings, images = {}, basePath = '') {
+  const warnings = new Set()
   article.className = `article ${settings.platform} ${settings.theme}`
-  article.style.cssText = `--md-primary-color:${settings.color};--md-font-size:${settings.fontSize}px;--article-leading:${settings.lineHeight};--article-font:${settings.font === 'serif' ? '"Noto Serif SC","Songti SC",SimSun,serif' : '-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif'};`
+  article.getRootNode().host.style.cssText = `--md-primary-color:${settings.color};--md-font-size:${settings.fontSize}px;--article-leading:${settings.lineHeight};--article-font:${settings.font === 'serif' ? '"Noto Serif SC","Songti SC",SimSun,serif' : '-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif'};`
+  const customStyle = article.getRootNode().querySelector('[data-article-custom]')
+  customStyle.textContent = ''
+  if (settings.theme === 'custom' && settings.customCSS) {
+    try { customStyle.textContent = compileCustomCSS(settings.customCSS) }
+    catch (error) { warnings.add(`自定义样式未应用：${error.message}`) }
+  }
   const content = DOMPurify.sanitize(marked.parse(outputMarkdown(source, settings.includeTitle), { gfm: true, breaks: true }), {
     ALLOWED_TAGS: ['h1','h2','h3','h4','h5','h6','p','br','strong','b','em','i','s','del','blockquote','ul','ol','li','a','img','pre','code','table','thead','tbody','tr','th','td','hr','sup','sub','input'],
     ALLOWED_ATTR: ['href','src','alt','title','class','type','checked','disabled','start','align'],
     ALLOW_DATA_ATTR: false,
     RETURN_DOM_FRAGMENT: true,
   })
-  const warnings = new Set()
   for (const input of content.querySelectorAll('input')) { input.type = 'checkbox'; input.disabled = true }
   for (const code of content.querySelectorAll('pre > code')) {
     const lang = [...code.classList].find(c => c.startsWith('language-'))?.slice(9) || ''
@@ -142,7 +153,7 @@ export function renderArticle(article, source, settings, images = {}, basePath =
 }
 
 // Export resolved values, since publishing editors discard stylesheets and CSS variables.
-const inlineProperties = `display color background-color font-family font-size font-weight font-style line-height letter-spacing text-align text-decoration text-decoration-color white-space overflow-x overflow-y overflow-wrap word-break padding-top padding-right padding-bottom padding-left margin-top margin-right margin-bottom margin-left border-top-width border-right-width border-bottom-width border-left-width border-top-style border-right-style border-bottom-style border-left-style border-top-color border-right-color border-bottom-color border-left-color border-radius border-collapse vertical-align list-style-type max-width height`.split(' ')
+const inlineProperties = `display color background-color background-image background-size background-position background-repeat font-family font-size font-weight font-style font-variant line-height letter-spacing word-spacing text-align text-indent text-transform text-decoration text-decoration-color text-decoration-thickness text-shadow box-shadow white-space overflow-x overflow-y overflow-wrap word-break padding-top padding-right padding-bottom padding-left margin-top margin-right margin-bottom margin-left border-top-width border-right-width border-bottom-width border-left-width border-top-style border-right-style border-bottom-style border-left-style border-top-color border-right-color border-bottom-color border-left-color border-radius border-collapse vertical-align list-style-type max-width height`.split(' ')
 
 export function inlineHTML(article) {
   const clone = article.cloneNode(true)
@@ -167,7 +178,7 @@ export function inlineHTML(article) {
       copy.style.marginRight = computed.display === 'table' ? 'auto' : '0'
     }
     if (node.tagName === 'TABLE') copy.style.width = '100%'
-    if (node.tagName === 'IMG') { copy.style.height = 'auto'; copy.style.maxWidth = '100%'; copy.style.marginLeft = 'auto'; copy.style.marginRight = 'auto' }
+    if (node.tagName === 'IMG') { copy.style.height = 'auto'; copy.style.marginLeft = 'auto'; copy.style.marginRight = 'auto' }
     if (node.tagName === 'INPUT') {
       const span = document.createElement('span')
       span.textContent = node.checked ? '☑ ' : '☐ '
@@ -176,4 +187,22 @@ export function inlineHTML(article) {
   })
   clone.style.maxWidth = '100%'
   return clone.outerHTML
+}
+
+export function editableThemeCSS(article) {
+  const rules = article.getRootNode().querySelector('[data-article-base]').sheet.cssRules
+  const classes = new Set(article.classList)
+  const blocks = []
+  for (const rule of rules) {
+    if (rule.type !== CSSRule.STYLE_RULE) continue
+    const selectors = rule.selectorText.split(/,(?![^()]*\))/).map(s => s.trim()).filter(selector => {
+      if (selector.includes(':host')) return false
+      return [...selector.matchAll(/\.article\.([\w-]+)/g)].every(match => classes.has(match[1]))
+    }).map(selector => {
+      selector = selector.replace(/\.article\.([\w-]+)/g, '.article')
+      return selector.startsWith('.article') ? selector : `.article ${selector}`
+    })
+    if (selectors.length) blocks.push(`${selectors.join(',\n')} {\n  ${rule.style.cssText.replace(/; /g, ';\n  ')}\n}`)
+  }
+  return '/* 修改下方 CSS，实时预览后保存到当前文章。\n * 主题色 var(--md-primary-color)，字号 var(--md-font-size)，行距 var(--article-leading)。\n */\n\n' + blocks.join('\n\n')
 }

@@ -1,4 +1,5 @@
 import { marked } from 'marked'
+import { themes } from './themes.js'
 
 export const platforms = {
   wechat: { name: '微信公众号', short: '公众号', color: '#07a35a', size: 16 },
@@ -6,7 +7,7 @@ export const platforms = {
   toutiao: { name: '头条号', short: '头条号', color: '#ed4545', size: 18 },
 }
 
-export const defaults = { platform: 'wechat', theme: 'classic', color: '#07a35a', fontSize: 16, lineHeight: 1.8, font: 'sans', includeTitle: true, footnotes: true, remote: false }
+export const defaults = { platform: 'wechat', theme: 'classic', customCSS: '', color: '#07a35a', fontSize: 16, lineHeight: 1.8, font: 'sans', includeTitle: true, footnotes: true, remote: false }
 
 export function splitMatter(source) {
   source = source.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n')
@@ -67,7 +68,8 @@ export function resolveImage(path, images = {}, basePath = '') {
 export function cleanSettings(input = {}) {
   return {
     platform: Object.hasOwn(platforms, input.platform) ? input.platform : defaults.platform,
-    theme: ['classic', 'minimal', 'editorial', 'nice'].includes(input.theme) ? input.theme : defaults.theme,
+    theme: themes.some(t => t.id === input.theme) || (input.theme === 'custom' && typeof input.customCSS === 'string' && input.customCSS.trim() && input.customCSS.length <= 100000) ? input.theme : defaults.theme,
+    customCSS: typeof input.customCSS === 'string' && input.customCSS.length <= 100000 ? input.customCSS : '',
     color: /^#[\da-f]{6}$/i.test(input.color) ? input.color : defaults.color,
     fontSize: [14, 15, 16, 17, 18, 20].includes(input.fontSize) ? input.fontSize : defaults.fontSize,
     lineHeight: [1.5, 1.6, 1.7, 1.8, 2, 2.2].includes(input.lineHeight) ? input.lineHeight : defaults.lineHeight,

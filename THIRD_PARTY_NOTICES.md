@@ -12,6 +12,8 @@
 
 「Nice」主题参考 [Markdown Nice](https://github.com/mdnice/markdown-nice) 的清爽阅读与主题排版理念。相关 CSS 在 `src/renderer.js` 中独立编写，未直接复制该项目的源代码或主题文件。
 
+「纸间」「夜航」「花信」从 [mdnice 编辑器](https://editor.mdnice.com/) 的主题展示中参考多种阅读氛围的设计方向，具体配色、版式、名称和 CSS 均独立设计，实现在 `src/themes.js`，未复制其主题源代码、素材或付费主题。
+
 富文本转换工作流参考 [Obsidian Social Formatter](https://github.com/spark-ai-boy/obsidian-social-formatter)，未复制其实现代码。
 
 ## 开发与运行依赖
