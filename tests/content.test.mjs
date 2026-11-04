@@ -26,4 +26,5 @@ test('relative image resolution handles folders, URL encoding, and ambiguous nam
 test('backup settings cannot inject CSS or unsupported platform configuration', () => {
   assert.deepEqual(cleanSettings({ platform:'__proto__', color:'red;position:fixed', fontSize:999, theme:'<script>' }), defaults)
   assert.equal(safeName('../../bad:name?'), '.._.._bad_name_')
+  assert.equal(cleanSettings({ theme:'nice' }).theme, 'nice')
 })

@@ -67,7 +67,7 @@ export function resolveImage(path, images = {}, basePath = '') {
 export function cleanSettings(input = {}) {
   return {
     platform: Object.hasOwn(platforms, input.platform) ? input.platform : defaults.platform,
-    theme: ['classic', 'minimal', 'editorial'].includes(input.theme) ? input.theme : defaults.theme,
+    theme: ['classic', 'minimal', 'editorial', 'nice'].includes(input.theme) ? input.theme : defaults.theme,
     color: /^#[\da-f]{6}$/i.test(input.color) ? input.color : defaults.color,
     fontSize: [14, 15, 16, 17, 18, 20].includes(input.fontSize) ? input.fontSize : defaults.fontSize,
     lineHeight: [1.5, 1.6, 1.7, 1.8, 2, 2.2].includes(input.lineHeight) ? input.lineHeight : defaults.lineHeight,

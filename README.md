@@ -2,8 +2,6 @@
 
 MDInk 是一款轻量的 Markdown 社媒排版工具，支持实时预览、主题自定义和一键复制，让一篇文章轻松适配微信公众号、稀土掘金和头条号。
 
-感谢 [doocs/md](https://github.com/doocs/md) 和 [Obsidian Social Formatter](https://github.com/spark-ai-boy/obsidian-social-formatter) 两个开源项目，为 MDInk 的界面设计、文章排版和多平台转换提供了参考与灵感。
-
 在线使用：[MDInk](https://oooooooko.github.io/mdink/)
 
 ## 直接离线使用
@@ -22,6 +20,8 @@ MDInk 是一款轻量的 Markdown 社媒排版工具，支持实时预览、主�
 | 头条号 | 富文本 HTML + 纯文本剪贴板 | 内联 CSS；默认 18px 正文和资讯阅读排版 |
 
 还支持导出独立排版 HTML、Markdown，复制 HTML 源码，以及所有草稿的 JSON 备份和恢复（包含图片、正文与样式）。恢复备份会追加草稿，保留现有内容。
+
+内置「经典」「简约」「杂志」和「Nice」四种主题，可在右侧「排版设置 → 文章主题」中切换。「Nice」参考 Markdown Nice 的清爽阅读风格，以细线标题、留白和浅色引用块呈现内容，同样支持主题色、字体、字号与行距调整。
 
 ### 数据与兼容性
 
@@ -77,8 +77,12 @@ npm run test:browser
 
 `vite-plugin-singlefile` 当前对包含单引号的 CSP 存在误报，构建时可能提示内联脚本被阻止；页面的 `script-src` 已允许内联脚本，离线浏览器检查会验证实际加载结果。
 
-## 来源与许可
+## 致谢
 
-- [doocs/md](https://github.com/doocs/md)：参考其 UI 布局，复用 `packages/shared/src/configs/theme-css/default.css`（WTFPL），保留原文于 `src/vendor/DOOCS-LICENSE.txt`。取材提交：`516efead5c5a8a2a49991629533b9a8877924a43`。
-- [Obsidian Social Formatter](https://github.com/spark-ai-boy/obsidian-social-formatter/blob/main/README.zh.md)：参考富文本复制、内联 CSS、本地图片和多平台预览工作流，未复制其实现代码。
-- 依赖许可见 [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)。
+感谢以下开源项目，为 MDInk 的界面设计、文章排版和多平台转换提供了参考与灵感：
+
+- [doocs/md](https://github.com/doocs/md)：参考编辑器布局，复用经典排版主题。
+- [Markdown Nice](https://github.com/mdnice/markdown-nice)：为「Nice」主题的清爽排版与阅读体验提供灵感；主题样式独立编写。
+- [Obsidian Social Formatter](https://github.com/spark-ai-boy/obsidian-social-formatter)：参考富文本复制、内联 CSS、本地图片和多平台预览工作流。
+
+第三方来源与许可详见 [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)。

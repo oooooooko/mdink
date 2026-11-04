@@ -39,6 +39,21 @@ const baseCSS = `
 .article.minimal h3 { border:0; padding:0; }.article.minimal strong { color:inherit; }
 .article.editorial h1,.article.editorial h2 { display:block; color:var(--md-primary-color); background:none; text-align:left; padding:0 0 0 14px; border:0; border-left:4px solid var(--md-primary-color); margin:32px 0 18px; font-size:1.3em; }
 .article.editorial blockquote { border:0; border-top:2px solid var(--md-primary-color); background:#f8f9fa; border-radius:0; }
+/* An independent theme inspired by Markdown Nice's clean reading layout. */
+.article.nice { color:#3e3e3e; }
+.article.nice h1 { display:block; padding:0; border:0; background:none; color:#262626; font-size:1.5em; text-align:center; margin:28px 0 24px; }
+.article.nice h2 { display:block; padding:0 0 10px; border:0; border-bottom:2px solid var(--md-primary-color); background:none; color:#262626; font-size:1.25em; text-align:left; margin:32px 0 18px; }
+.article.nice h3 { border:0; padding:0; color:var(--md-primary-color); font-size:1.1em; margin:26px 0 14px; }
+.article.nice p { color:#3e3e3e; margin:1.15em 0; letter-spacing:.02em; }
+.article.nice blockquote { padding:14px 18px; border:0; border-left:3px solid var(--md-primary-color); border-radius:0; background:#f5f7fa; margin:22px 0; }
+.article.nice blockquote p { color:#68707c; margin:0; }
+.article.nice ul { list-style:disc; }
+.article.nice li { margin:8px 0; }
+.article.nice li p { margin:4px 0; }
+.article.nice strong { color:var(--md-primary-color); }
+.article.nice a { text-decoration:underline; }
+.article.nice th { background:#f1f5f9; }
+.article.nice hr { border:0; border-top:1px solid #dbe2e8; height:0; transform:none; margin:30px 0; }
 `
 
 export function initPreview(host) {

@@ -34,6 +34,13 @@ try {
   assert.equal(await page.locator('.brand strong').innerText(), 'MDInk')
   await page.waitForFunction(() => document.querySelector('#save-status').textContent.includes('已保存'))
   await page.screenshot({ path:resolve(results,'desktop.png') })
+  await page.locator('[data-theme="nice"]').click()
+  await page.waitForFunction(() => document.querySelector('#save-status').textContent.includes('已保存'))
+  await page.reload()
+  await page.locator('.cm-content').waitFor()
+  assert.equal(await page.locator('[data-theme="nice"]').getAttribute('aria-pressed'), 'true')
+  assert.equal(await page.locator('#article-host').locator('h2').first().evaluate(el => getComputedStyle(el).borderBottomWidth), '2px')
+  await page.screenshot({ path:resolve(results,'nice-theme.png') })
   const source = `---\ntitle: 离线项目测试\nauthor: tester\n---\n# 离线项目测试\n\n一段 **重点** 和 [项目地址](https://example.com/repo)。\n\n## 使用方法\n\n\`\`\`python\nprint("Hello")\n\`\`\`\n\n| 功能 | 状态 |\n| --- | --- |\n| 离线 | 可用 |\n\n- [x] 已完成\n- [ ] 待办\n\n![本地图片](assets/cover.png "图片说明")\n\n![远程图片](https://example.com/should-not-fetch.png)\n\n<script>window.__injected=true</script><img src=x onerror="window.__injected=true"><a href="javascript:alert(1)">危险链接</a>`
   await page.locator('.cm-content').fill(source)
   await page.waitForFunction(() => document.querySelector('#article-host').shadowRoot.querySelector('h1')?.textContent === '离线项目测试')
@@ -59,6 +66,7 @@ try {
   assert.ok(!clipboard['text/html'].includes('<style'))
   assert.ok(!clipboard['text/html'].includes('<script'))
   assert.ok(!clipboard['text/html'].includes('onerror'))
+  assert.equal(await page.evaluate(html => new DOMParser().parseFromString(html,'text/html').querySelector('h2').style.borderBottomWidth, clipboard['text/html']), '2px')
   await writeFile(resolve(results,'wechat.html'), clipboard['text/html'])
 
   await page.locator('[data-platform="juejin"]').click()
