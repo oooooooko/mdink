@@ -2,14 +2,14 @@ import { EditorView, basicSetup } from 'codemirror'
 import { EditorState } from '@codemirror/state'
 import { markdown } from '@codemirror/lang-markdown'
 import { undo, redo } from '@codemirror/commands'
-import { createElement, PenLine, FileText, Plus, FolderOpen, PanelLeft, PanelRight, ChevronDown, Copy, Download, Check, ShieldCheck, Upload, Trash2, MoreHorizontal, Smartphone, Monitor, Bold, Italic, Heading2, Link, Image, List, Code, Quote, X, ArrowUpRight, FileCode2, ArrowDownUp, Settings2, Search, CheckCheck } from 'lucide'
+import { createElement, PenLine, FileText, Plus, FolderOpen, PanelLeft, PanelRight, ChevronDown, Copy, Download, Check, ShieldCheck, Upload, Trash2, MoreHorizontal, Smartphone, Monitor, Bold, Italic, Heading2, Link, Image, List, Code, Quote, X, FileCode2, ArrowDownUp, Settings2, Search, CheckCheck } from 'lucide'
 import { defaults, platforms, articleTitle, safeName, cleanSettings, imageKey, outputMarkdown } from './content.js'
 import { initPreview, renderArticle, inlineHTML } from './renderer.js'
 import { loadWorkspace, saveWorkspace } from './storage.js'
 import { sample } from './sample.js'
 import './style.css'
 
-const icons = { PenLine, FileText, Plus, FolderOpen, PanelLeft, PanelRight, ChevronDown, Copy, Download, Check, ShieldCheck, Upload, Trash2, MoreHorizontal, Smartphone, Monitor, Bold, Italic, Heading2, Link, Image, List, Code, Quote, X, ArrowUpRight, FileCode2, ArrowDownUp, Settings2, Search, CheckCheck }
+const icons = { PenLine, FileText, Plus, FolderOpen, PanelLeft, PanelRight, ChevronDown, Copy, Download, Check, ShieldCheck, Upload, Trash2, MoreHorizontal, Smartphone, Monitor, Bold, Italic, Heading2, Link, Image, List, Code, Quote, X, FileCode2, ArrowDownUp, Settings2, Search, CheckCheck }
 const icon = (name, size = 16) => createElement(icons[name], { width: size, height: size, 'stroke-width': 1.7, 'aria-hidden': 'true' }).outerHTML
 const $ = selector => document.querySelector(selector)
 const escapeHTML = text => String(text).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c])
@@ -56,7 +56,7 @@ $('#app').innerHTML = `
       <div class="panel-heading"><span>${icon('FolderOpen')} 我的草稿 <span id="draft-count" class="count"></span></span><button class="icon-btn" data-action="new" aria-label="新建文章" title="新建文章">${icon('Plus')}</button></div>
       <button class="import-button" data-action="import">${icon('Upload')} 导入 Markdown</button>
       <div class="draft-list" id="draft-list"></div>
-      <div class="draft-footer"><div>${icon('ShieldCheck', 14)} 灵感，只留在你的设备</div><p>草稿自动保存在当前浏览器。<br>定期导出备份，留住每次创作。</p><button class="text-link" data-action="backup">备份全部草稿 ${icon('ArrowUpRight', 12)}</button></div>
+      <div class="draft-footer"><div>${icon('ShieldCheck', 14)} 灵感，只留在你的设备</div><p>草稿自动保存在当前浏览器。</p></div>
     </aside>
     <section class="editor-panel" aria-label="Markdown 编辑区">
       <div class="pane-heading"><div><button class="icon-btn" data-action="sidebar" aria-label="切换草稿栏" title="切换草稿栏">${icon('PanelLeft')}</button><span>Markdown</span><span class="muted tiny">源文</span></div><div><span id="save-status" class="save-status">已保存</span><button class="icon-btn mobile-mode" data-action="mobile-preview" title="切换预览" aria-label="切换预览">${icon('Smartphone')}</button></div></div>
@@ -77,7 +77,6 @@ $('#app').innerHTML = `
         <div class="setting-section"><div class="section-label">内容选项 <span>CONTENT</span></div><label class="toggle-row"><span>正文包含文章标题</span><input type="checkbox" role="switch" id="includeTitle" data-setting="includeTitle"></label><label class="toggle-row" id="footnotes-row"><span>站外链接转文末脚注</span><input type="checkbox" role="switch" id="footnotes" data-setting="footnotes"></label><label class="toggle-row"><span>允许联网加载远程图片</span><input type="checkbox" role="switch" id="remote" data-setting="remote"></label><p class="setting-tip">本地图片会内嵌到文章中。平台若不接收图片，请在发布时重新上传。</p></div>
         <div id="warnings" class="warnings" hidden></div><button class="reset-button" data-action="reset">恢复当前平台默认样式</button>
       </div>
-      <div class="settings-bottom">主题参考 <a href="https://github.com/doocs/md" target="_blank" rel="noopener noreferrer">doocs/md</a><span>·</span><a href="https://github.com/mdnice/markdown-nice" target="_blank" rel="noopener noreferrer">mdnice</a></div>
     </aside>
   </main>
   <input type="file" id="file-input" accept=".md,.markdown,.txt,image/png,image/jpeg,image/gif,image/webp" multiple hidden>
