@@ -1,9 +1,9 @@
 import { marked } from 'marked'
 
 export const platforms = {
-  wechat: { name: '微信公众号', short: '公众号', color: '#07a35a', size: 16, hint: '复制排版后，粘贴到公众号后台的正文编辑器。站外链接会附在文末。' },
-  juejin: { name: '稀土掘金', short: '掘金', color: '#1e80ff', size: 16, hint: '推荐复制 Markdown，粘贴到掘金的 Markdown 编辑器；样式由掘金控制。' },
-  toutiao: { name: '头条号', short: '头条号', color: '#ed4545', size: 18, hint: '复制排版后，粘贴到头条号的图文正文编辑器。' },
+  wechat: { name: '微信公众号', short: '公众号', color: '#07a35a', size: 16 },
+  juejin: { name: '稀土掘金', short: '掘金', color: '#1e80ff', size: 16 },
+  toutiao: { name: '头条号', short: '头条号', color: '#ed4545', size: 18 },
 }
 
 export const defaults = { platform: 'wechat', theme: 'classic', color: '#07a35a', fontSize: 16, lineHeight: 1.8, font: 'sans', includeTitle: true, footnotes: true, remote: false }

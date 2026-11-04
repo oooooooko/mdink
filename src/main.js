@@ -2,14 +2,14 @@ import { EditorView, basicSetup } from 'codemirror'
 import { EditorState } from '@codemirror/state'
 import { markdown } from '@codemirror/lang-markdown'
 import { undo, redo } from '@codemirror/commands'
-import { createElement, PenLine, FileText, Plus, FolderOpen, PanelLeft, PanelRight, ChevronDown, Copy, Download, Check, ShieldCheck, Upload, Trash2, MoreHorizontal, Smartphone, Monitor, Bold, Italic, Heading2, Link, Image, List, Code, Quote, CircleHelp, X, ArrowUpRight, FileCode2, Link2, Settings2, Search, CheckCheck } from 'lucide'
+import { createElement, PenLine, FileText, Plus, FolderOpen, PanelLeft, PanelRight, ChevronDown, Copy, Download, Check, ShieldCheck, Upload, Trash2, MoreHorizontal, Smartphone, Monitor, Bold, Italic, Heading2, Link, Image, List, Code, Quote, X, ArrowUpRight, FileCode2, ArrowDownUp, Settings2, Search, CheckCheck } from 'lucide'
 import { defaults, platforms, articleTitle, safeName, cleanSettings, imageKey, outputMarkdown } from './content.js'
 import { initPreview, renderArticle, inlineHTML } from './renderer.js'
 import { loadWorkspace, saveWorkspace } from './storage.js'
 import { sample } from './sample.js'
 import './style.css'
 
-const icons = { PenLine, FileText, Plus, FolderOpen, PanelLeft, PanelRight, ChevronDown, Copy, Download, Check, ShieldCheck, Upload, Trash2, MoreHorizontal, Smartphone, Monitor, Bold, Italic, Heading2, Link, Image, List, Code, Quote, CircleHelp, X, ArrowUpRight, FileCode2, Link2, Settings2, Search, CheckCheck }
+const icons = { PenLine, FileText, Plus, FolderOpen, PanelLeft, PanelRight, ChevronDown, Copy, Download, Check, ShieldCheck, Upload, Trash2, MoreHorizontal, Smartphone, Monitor, Bold, Italic, Heading2, Link, Image, List, Code, Quote, X, ArrowUpRight, FileCode2, ArrowDownUp, Settings2, Search, CheckCheck }
 const icon = (name, size = 16) => createElement(icons[name], { width: size, height: size, 'stroke-width': 1.7, 'aria-hidden': 'true' }).outerHTML
 const $ = selector => document.querySelector(selector)
 const escapeHTML = text => String(text).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c])
@@ -47,9 +47,9 @@ $('#app').innerHTML = `
     <div class="header-actions"><span class="local-badge">${icon('ShieldCheck', 14)} 本地处理</span><details class="menu export-menu"><summary class="button">${icon('Download')}<span>导出</span>${icon('ChevronDown', 12)}</summary><div class="dropdown align-right"><button data-action="export-html">导出排版 HTML</button><button data-action="export-md">导出 Markdown</button><button data-action="copy-html">复制 HTML 源码</button><hr><button data-action="backup">备份所有草稿</button></div></details><button class="button primary" id="copy-primary" data-action="copy">${icon('Copy')}<span>复制排版</span></button></div>
   </header>
   <div class="platform-bar">
-    <div class="workspace-label"><span class="eyebrow">创作工作台</span><span>一篇文章，多处精彩。</span></div>
+    <div class="workspace-label"><span class="eyebrow">创作工作台</span></div>
     <div class="platform-tabs" role="tablist" aria-label="发布平台">${Object.entries(platforms).map(([key,p]) => `<button role="tab" class="platform-tab" data-platform="${key}" aria-selected="false">${platformMark(key)}<span>${p.name}</span></button>`).join('')}</div>
-    <div class="platform-bar-end"><span class="platform-caption">选择平台，即刻适配</span><button class="icon-btn" data-action="settings" aria-label="切换排版设置" title="排版设置">${icon('PanelRight', 18)}</button></div>
+    <div class="platform-bar-end"><button class="icon-btn" data-action="settings" aria-label="切换排版设置" title="排版设置">${icon('PanelRight', 18)}</button></div>
   </div>
   <main class="workspace">
     <aside class="drafts-panel" aria-label="本地草稿">
@@ -60,14 +60,13 @@ $('#app').innerHTML = `
     </aside>
     <section class="editor-panel" aria-label="Markdown 编辑区">
       <div class="pane-heading"><div><button class="icon-btn" data-action="sidebar" aria-label="切换草稿栏" title="切换草稿栏">${icon('PanelLeft')}</button><span>Markdown</span><span class="muted tiny">源文</span></div><div><span id="save-status" class="save-status">已保存</span><button class="icon-btn mobile-mode" data-action="mobile-preview" title="切换预览" aria-label="切换预览">${icon('Smartphone')}</button></div></div>
-      <div class="format-toolbar" aria-label="格式工具栏">${[['heading','Heading2','二级标题'],['bold','Bold','加粗'],['italic','Italic','斜体'],['quote','Quote','引用'],['list','List','列表'],['link','Link','链接'],['code','Code','代码块']].map(([format,i,label]) => `<button class="icon-btn" data-format="${format}" title="${label}" aria-label="${label}">${icon(i, 17)}</button>`).join('')}<span class="toolbar-separator"></span><button class="icon-btn" data-action="image" title="插入本地图片" aria-label="插入本地图片">${icon('Image', 17)}</button><span class="toolbar-spacer"></span><button class="icon-btn active" data-action="scroll-sync" id="sync-button" aria-pressed="true" title="同步滚动" aria-label="同步滚动">${icon('Link2', 15)}</button></div>
+      <div class="format-toolbar" aria-label="格式工具栏">${[['heading','Heading2','二级标题'],['bold','Bold','加粗'],['italic','Italic','斜体'],['quote','Quote','引用'],['list','List','列表'],['link','Link','链接'],['code','Code','代码块']].map(([format,i,label]) => `<button class="icon-btn" data-format="${format}" title="${label}" aria-label="${label}">${icon(i, 17)}</button>`).join('')}<span class="toolbar-separator"></span><button class="icon-btn" data-action="image" title="插入本地图片" aria-label="插入本地图片">${icon('Image', 17)}</button><span class="toolbar-spacer"></span><button class="icon-btn active" data-action="scroll-sync" id="sync-button" aria-pressed="true" title="同步滚动" aria-label="同步滚动">${icon('ArrowDownUp', 17)}</button></div>
       <div id="editor"></div>
       <div class="editor-status"><span id="word-count"></span><span id="cursor-status">行 1，列 1</span></div>
     </section>
     <section class="preview-panel" aria-label="文章预览">
       <div class="pane-heading"><div><span class="live-dot"></span><span>实时预览</span><span class="preview-platform" id="preview-platform"></span></div><div class="preview-controls"><button class="icon-btn active" data-action="wide" id="wide-button" title="桌面预览" aria-label="桌面预览" aria-pressed="true">${icon('Monitor', 16)}</button><button class="icon-btn" data-action="narrow" id="narrow-button" title="手机预览" aria-label="手机预览" aria-pressed="false">${icon('Smartphone', 16)}</button><button class="icon-btn mobile-mode" data-action="mobile-preview" title="返回编辑" aria-label="返回编辑">${icon('Code', 16)}</button></div></div>
       <div class="preview-scroll" id="preview-scroll"><div class="paper" id="paper"><div class="paper-meta"><span id="paper-label"></span><span id="paper-tag">文章排版预览</span></div><div id="article-host"></div><div class="paper-end"><span></span> 愿你的分享，被更多人看见 <span></span></div></div></div>
-      <div class="platform-note" id="platform-note"></div>
     </section>
     <aside class="settings-panel" aria-label="排版设置">
       <div class="panel-heading"><span>${icon('Settings2')} 排版设置</span><button class="icon-btn" data-action="settings" aria-label="收起排版设置" title="收起排版设置">${icon('X', 15)}</button></div>
@@ -81,7 +80,6 @@ $('#app').innerHTML = `
       <div class="settings-bottom">样式灵感来自 <a href="https://github.com/doocs/md" target="_blank" rel="noopener noreferrer">doocs/md ${icon('ArrowUpRight', 11)}</a></div>
     </aside>
   </main>
-  <footer class="app-footer"><span><span class="live-dot"></span> 离线可用 <i>·</i> 无需登录，无需上传</span><span>用 Markdown，专注内容本身。 <button data-action="help">${icon('CircleHelp', 13)}</button></span></footer>
   <input type="file" id="file-input" accept=".md,.markdown,.txt,image/png,image/jpeg,image/gif,image/webp" multiple hidden>
   <input type="file" id="folder-input" webkitdirectory multiple hidden>
   <input type="file" id="image-input" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden>
@@ -161,7 +159,6 @@ function render() {
   $('#preview-platform').textContent=p.short
   $('#paper-label').innerHTML=`${platformMark(s.platform)} ${p.name}`
   $('#paper-tag').textContent=s.platform==='juejin'?'Markdown 阅读预览':'文章排版预览'
-  $('#platform-note').innerHTML=`${icon('CircleHelp',13)}<span>${p.hint}</span>`
   $('#copy-primary span').textContent=s.platform==='juejin'?'复制 Markdown':'复制排版'
   $('#word-count').textContent=`${active().source.replace(/\s/g,'').length.toLocaleString()} 字符 · 约 ${Math.max(1,Math.ceil(active().source.replace(/\s/g,'').length/400))} 分钟阅读`
   $('#warnings').hidden=!warnings.length
