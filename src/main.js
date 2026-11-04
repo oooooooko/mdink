@@ -249,7 +249,7 @@ function render() {
 }
 
 function switchDraft(id) {
-  active().source=editor.state.doc.toString()
+  if (active()) active().source=editor.state.doc.toString()
   state.active=id
   editor.setState(EditorState.create({doc:active().source,extensions:editorExtensions}))
   document.body.classList.remove('show-drafts')
