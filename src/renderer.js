@@ -73,7 +73,8 @@ export function initPreview(host) {
 export function renderArticle(article, source, settings, images = {}, basePath = '') {
   const warnings = new Set()
   article.className = `article ${settings.platform} ${settings.theme}`
-  article.getRootNode().host.style.cssText = `--md-primary-color:${settings.color};--md-font-size:${settings.fontSize}px;--article-leading:${settings.lineHeight};--article-font:${settings.font === 'serif' ? '"Noto Serif SC","Songti SC",SimSun,serif' : '-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif'};`
+  const fontFamily = settings.font === 'optima' ? 'Optima-Regular,Optima,"PingFang TC","PingFang SC",sans-serif' : settings.font === 'serif' ? '"Noto Serif SC","Songti SC",SimSun,serif' : '-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif'
+  article.getRootNode().host.style.cssText = `--md-primary-color:${settings.color};--md-font-size:${settings.fontSize}px;--article-leading:${settings.lineHeight};--article-font:${fontFamily};`
   const customStyle = article.getRootNode().querySelector('[data-article-custom]')
   customStyle.textContent = ''
   if (settings.theme === 'custom' && settings.customCSS) {

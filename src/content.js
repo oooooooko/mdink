@@ -72,8 +72,8 @@ export function cleanSettings(input = {}) {
     customCSS: typeof input.customCSS === 'string' && input.customCSS.length <= 100000 ? input.customCSS : '',
     color: /^#[\da-f]{6}$/i.test(input.color) ? input.color : defaults.color,
     fontSize: [14, 15, 16, 17, 18, 20].includes(input.fontSize) ? input.fontSize : defaults.fontSize,
-    lineHeight: [1.5, 1.6, 1.7, 1.8, 2, 2.2].includes(input.lineHeight) ? input.lineHeight : defaults.lineHeight,
-    font: input.font === 'serif' ? 'serif' : 'sans',
+    lineHeight: [1.25, 1.5, 1.6, 1.7, 1.8, 2, 2.2].includes(input.lineHeight) ? input.lineHeight : defaults.lineHeight,
+    font: ['sans','serif','optima'].includes(input.font) ? input.font : 'sans',
     ...Object.fromEntries(['includeTitle', 'footnotes', 'remote'].map(key => [key, typeof input[key] === 'boolean' ? input[key] : defaults[key]])),
   }
 }

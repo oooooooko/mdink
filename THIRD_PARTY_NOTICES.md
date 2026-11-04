@@ -16,6 +16,10 @@
 
 富文本转换工作流参考 [Obsidian Social Formatter](https://github.com/spark-ai-boy/obsidian-social-formatter)，未复制其实现代码。
 
+「紫藤」主题由用户提供的 CSS 模板适配而来，实现在 `src/themes.js`。保留其主要配色和排版特征，将 `#nice` 及相关结构选择器转换为 MDInk 对应元素；此主题不列入上述独立设计主题的声明。
+
+「智序」是独立设计与编写的 AI 科技文章主题，未复制第三方主题的 CSS 或素材。
+
 ## 开发与运行依赖
 
 | 依赖 | 许可 | 来源 |

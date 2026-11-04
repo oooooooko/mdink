@@ -77,7 +77,7 @@ $('#app').innerHTML = `
       <div class="settings-scroll">
         <div class="setting-section"><div class="section-label">文章主题 <span>THEME</span></div><div class="theme-list">${[...themes,{id:'custom',name:'自定义',description:'当前文章'}].map(({id,name,description}) => `<button class="theme-card" data-theme="${id}" ${id==='custom'?'id="custom-theme-card" hidden':''} aria-pressed="false"><div class="theme-mini ${id}"><b></b><i></i><i></i><i></i></div><span><strong>${name}</strong><small>${description}</small></span><span class="theme-check">${icon('Check', 13)}</span></button>`).join('')}</div><button class="edit-style-button" data-action="edit-style">${icon('Code',15)} 编辑 CSS 样式</button></div>
         <div class="setting-section"><div class="section-label">主题色 <span id="color-label">#07A35A</span></div><div class="color-options">${['#07a35a','#1e80ff','#7c5cdb','#d89938','#ed4545','#343d46'].map(color => `<button class="color-swatch" data-color="${color}" style="--swatch:${color}" title="${color}" aria-label="主题色 ${color}" aria-pressed="false"></button>`).join('')}<label class="custom-color" title="自定义主题色">${icon('Plus', 13)}<input type="color" id="custom-color" aria-label="自定义主题色"></label></div></div>
-        <div class="setting-section typography"><div class="section-label">文字排版 <span>TYPOGRAPHY</span></div><label class="setting-row">字体<select id="font" data-setting="font"><option value="sans">无衬线 · 系统默认</option><option value="serif">衬线 · 宋体</option></select></label><label class="setting-row">字号<select id="fontSize" data-setting="fontSize">${[14,15,16,17,18,20].map(n=>`<option value="${n}">${n} px</option>`).join('')}</select></label><label class="setting-row">行距<select id="lineHeight" data-setting="lineHeight">${[1.5,1.6,1.7,1.8,2,2.2].map(n=>`<option value="${n}">${n.toFixed(1)} 倍</option>`).join('')}</select></label></div>
+        <div class="setting-section typography"><div class="section-label">文字排版 <span>TYPOGRAPHY</span></div><label class="setting-row">字体<select id="font" data-setting="font"><option value="sans">无衬线 · 系统默认</option><option value="serif">衬线 · 宋体</option><option value="optima">Optima · 人文字体</option></select></label><label class="setting-row">字号<select id="fontSize" data-setting="fontSize">${[14,15,16,17,18,20].map(n=>`<option value="${n}">${n} px</option>`).join('')}</select></label><label class="setting-row">行距<select id="lineHeight" data-setting="lineHeight">${[1.25,1.5,1.6,1.7,1.8,2,2.2].map(n=>`<option value="${n}">${n===1.25?'1.25':n.toFixed(1)} 倍</option>`).join('')}</select></label></div>
         <div class="setting-section"><div class="section-label">内容选项 <span>CONTENT</span></div><label class="toggle-row"><span>正文包含文章标题</span><input type="checkbox" role="switch" id="includeTitle" data-setting="includeTitle"></label><label class="toggle-row" id="footnotes-row"><span>站外链接转文末脚注</span><input type="checkbox" role="switch" id="footnotes" data-setting="footnotes"></label><label class="toggle-row"><span>允许联网加载远程图片</span><input type="checkbox" role="switch" id="remote" data-setting="remote"></label><p class="setting-tip">本地图片会内嵌到文章中。平台若不接收图片，请在发布时重新上传。</p></div>
         <div id="warnings" class="warnings" hidden></div><button class="reset-button" data-action="reset">恢复当前平台默认样式</button>
       </div>
@@ -91,7 +91,7 @@ $('#app').innerHTML = `
   <div class="drop-overlay" id="drop-overlay" hidden><div>${icon('Upload', 42)}<strong>放下文件，开始创作</strong><p>支持 Markdown 和本地图片</p></div></div>
   <dialog id="style-dialog" class="style-dialog">
     <div class="style-dialog-heading"><div><h2>自定义文章样式</h2><p>编辑 CSS，实时预览，保存到当前文章。</p></div><button class="icon-btn" data-action="close-style" aria-label="关闭样式编辑器">${icon('X',20)}</button></div>
-    <div class="style-dialog-toolbar"><label>从主题开始 <select id="style-base">${themes.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}<option value="custom" id="style-custom-option">已保存的自定义样式</option></select></label><span>主题色、字号和行距沿用文章设置</span></div>
+    <div class="style-dialog-toolbar"><label>从主题开始 <select id="style-base">${themes.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}<option value="custom" id="style-custom-option">已保存的自定义样式</option></select></label><span>支持主题色、字号与行距变量</span></div>
     <div class="style-dialog-content">
       <aside class="style-guide"><h3>可以修改什么</h3><p>点击一项，在 CSS 末尾添加覆盖规则。</p>${styleTargets.map(([name,selector,properties],index)=>`<button class="style-target" data-style-target="${index}"><strong>${name}</strong><code>${escapeHTML(selector)}</code><span>${properties}</span></button>`).join('')}<details><summary>可用的 CSS 变量</summary><p><code>--md-primary-color</code> 主题色<br><code>--md-font-size</code> 正文字号<br><code>--article-leading</code> 行高<br><code>--article-font</code> 字体</p></details><p>选择器以 <code>.article</code> 开头。外部资源不载入；伪元素、动画等效果不能随富文本复制。</p></aside>
       <section class="css-source"><div class="css-pane-heading"><strong>CSS 源代码</strong><span>⌘ / Ctrl + F 查找</span></div><div id="css-editor"></div></section>
@@ -136,7 +136,7 @@ const cssEditor = new EditorView({doc:'',extensions:cssEditorExtensions,parent:$
 function loadStyleSource(id, preserveColor = false) {
   styleDraftSettings = {...settings(), theme:id}
   const template = themes.find(t => t.id === id)
-  if (template?.color && !preserveColor) styleDraftSettings.color = template.color
+  if (template && !preserveColor) for (const key of ['color','fontSize','lineHeight','font']) if (template[key] !== undefined) styleDraftSettings[key] = template[key]
   renderArticle(styleArticle, active().source, styleDraftSettings, active().images, active().basePath)
   const source = id === 'custom' ? settings().customCSS : editableThemeCSS(styleArticle)
   initialStyleSource = source
@@ -177,7 +177,7 @@ function previewStyle() {
 
 function saveStyle() {
   if (!previewStyle()) return
-  Object.assign(settings(),{theme:'custom',customCSS:cssEditor.state.doc.toString(),color:styleDraftSettings.color})
+  Object.assign(settings(),{theme:'custom',customCSS:cssEditor.state.doc.toString(),color:styleDraftSettings.color,fontSize:styleDraftSettings.fontSize,lineHeight:styleDraftSettings.lineHeight,font:styleDraftSettings.font})
   initialStyleSource = settings().customCSS
   $('#style-dialog').close()
   render(); scheduleSave()
@@ -403,7 +403,7 @@ document.addEventListener('click',event=>{
   if(button.dataset.action){actions[button.dataset.action]?.();document.querySelectorAll('details[open]').forEach(d=>d.open=false)}
   if(button.dataset.format)insertFormat(button.dataset.format)
   if(button.dataset.platform){const key=button.dataset.platform;Object.assign(settings(),{platform:key,color:platforms[key].color,fontSize:platforms[key].size});render();scheduleSave()}
-  if(button.dataset.theme){const theme=themes.find(t=>t.id===button.dataset.theme);settings().theme=button.dataset.theme;if(theme?.color)settings().color=theme.color;render();scheduleSave()}
+  if(button.dataset.theme){const theme=themes.find(t=>t.id===button.dataset.theme);settings().theme=button.dataset.theme;if(theme)for(const key of ['color','fontSize','lineHeight','font'])if(theme[key]!==undefined)settings()[key]=theme[key];render();scheduleSave()}
   if(button.dataset.styleTarget!==undefined){const target=styleTargets[Number(button.dataset.styleTarget)];if(target){const text=`\n\n${target[1]} {\n  /* ${target[2]} */\n}\n`;const end=cssEditor.state.doc.length;cssEditor.dispatch({changes:{from:end,insert:text},selection:{anchor:end+text.indexOf('  /*')}});cssEditor.focus()}}
   if(button.dataset.color){settings().color=button.dataset.color;render();scheduleSave()}
   if(button.dataset.draft)switchDraft(button.dataset.draft)

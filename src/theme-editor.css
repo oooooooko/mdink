@@ -76,3 +76,9 @@
   .style-dialog-footer > div { justify-content:flex-end; }
   .style-dialog-footer .button { font-size:10px; padding:0 9px; }
 }
+
+.theme-mini.wisteria b{width:23px;height:5px;background:none;border-bottom:2px solid #d89cf6}.theme-mini.wisteria i:last-child{height:6px;width:25px;background:#fff5db;border-left:2px solid #ffcb49}
+.theme-mini.neural { border-color:#cadaef; background:#f8fbff; }
+.theme-mini.neural b { width:25px; height:6px; background:#e0edff; border-left:2px solid #2864ec; border-radius:0 3px 3px 0; }
+.theme-mini.neural i { background:#a7c8e6; }
+.theme-mini.neural i:last-child { background:#102338; width:25px; height:6px; border-radius:2px; }
